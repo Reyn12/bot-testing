@@ -113,6 +113,7 @@ export class FonnteAPI {
         target: target,
         message: caption || 'Image', // Fonnte butuh parameter message, bukan caption
         file: file,
+        url: file, // Tambah parameter url juga buat kompatibilitas
         countryCode: countryCode,
         ...(this.device && { device: this.device })
       };
@@ -130,21 +131,21 @@ export class FonnteAPI {
           'Authorization': this.token,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
       
-      if (!response.ok) {
-        throw new Error(`Fonnte API Error: ${result.reason || 'Unknown error'}`);
-      }
+      console.log('📸 Fonnte image response:', {
+        success: result.status || false,
+        detail: result.detail || result.message || 'Unknown',
+        timestamp: new Date().toISOString()
+      });
 
-      console.log('✅ Image sent successfully:', result);
-      return result;
-      
+      return result as FonnteResponse;
     } catch (error) {
-      console.error('❌ Failed to send image:', error);
-      throw error;
+      console.error('❌ Error sending image via Fonnte:', error);
+      throw new Error(`Failed to send image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

@@ -60,7 +60,7 @@ async function processMessage(data: FonnteWebhookData) {
       const fonnteAPI = createFonnteAPI();
       await fonnteAPI.sendImage({
         target: sender,
-        file: 'https://play-lh.googleusercontent.com/Byl6BHzEv7tWDGa5QUgztneq8C8TGYelu8ywVMTTRUH2e9keboyLqL4YhmzaU3vjgA',
+        file: 'https://i.imgur.com/pqQJBn5.png',
         caption: '💰 QR Code Pembayaran\n\nSilakan scan QR code di atas untuk melakukan pembayaran.\n\nSetelah transfer, konfirmasi ke kami ya! 😊'
       });
       

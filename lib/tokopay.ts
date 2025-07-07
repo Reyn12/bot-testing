@@ -86,7 +86,7 @@ export class TokopayAPI {
         body: JSON.stringify(payload),
       });
 
-      const result = await response.json();
+      const result = await response.json() as TokopayResponse;
       
       console.log('📱 Tokopay payment response:', {
         status: result.status,
@@ -119,7 +119,7 @@ export class TokopayAPI {
         }),
       });
 
-      return await response.json();
+      return await response.json() as TokopayResponse;
     } catch (error) {
       console.error('❌ Tokopay check payment error:', error);
       throw new Error('Failed to check payment status');

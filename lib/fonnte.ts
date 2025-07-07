@@ -109,6 +109,7 @@ export class FonnteAPI {
     try {
       const { target, file, caption = '', countryCode = '62' } = params;
       
+      // Coba method 1: JSON payload dengan parameter lengkap
       const payload = {
         target: target,
         message: caption || 'Image', // Fonnte butuh parameter message, bukan caption
@@ -118,7 +119,7 @@ export class FonnteAPI {
         ...(this.device && { device: this.device })
       };
 
-      console.log('📸 Sending image to Fonnte:', {
+      console.log('📸 Sending image to Fonnte (Method 1):', {
         target: target,
         file: file,
         message: payload.message,
@@ -136,16 +137,69 @@ export class FonnteAPI {
 
       const result = await response.json();
       
-      console.log('📸 Fonnte image response:', {
+      console.log('📸 Fonnte image response (Method 1):', {
         success: result.status || false,
         detail: result.detail || result.message || 'Unknown',
+        fullResponse: result,
+        timestamp: new Date().toISOString()
+      });
+
+      // Kalau method 1 gagal, coba method 2 dengan form-data
+      if (!result.status) {
+        console.log('🔄 Trying alternative method (Form-Data)...');
+        return await this.sendImageFormData(params);
+      }
+
+      return result as FonnteResponse;
+    } catch (error) {
+      console.error('❌ Error sending image via Fonnte:', error);
+      // Coba method 2 sebagai fallback
+      try {
+        console.log('🔄 Trying fallback method...');
+        return await this.sendImageFormData(params);
+      } catch (fallbackError) {
+        console.error('❌ Fallback method also failed:', fallbackError);
+        throw new Error(`Failed to send image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+  }
+
+  // Alternative method dengan form-data
+  async sendImageFormData(params: SendImageParams): Promise<FonnteResponse> {
+    try {
+      const { target, file, caption = '', countryCode = '62' } = params;
+      
+      const formData = new FormData();
+      formData.append('target', target);
+      formData.append('message', caption || 'Image');
+      formData.append('file', file);
+      formData.append('countryCode', countryCode);
+      if (this.device) formData.append('device', this.device);
+
+      console.log('📸 Sending image via Form-Data method');
+
+      const response = await fetch(`${this.baseURL}/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': this.token,
+          // Don't set Content-Type for FormData - browser will set it with boundary
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+      
+      console.log('📸 Fonnte Form-Data response:', {
+        success: result.status || false,
+        detail: result.detail || result.message || 'Unknown',
+        fullResponse: result,
         timestamp: new Date().toISOString()
       });
 
       return result as FonnteResponse;
     } catch (error) {
-      console.error('❌ Error sending image via Fonnte:', error);
-      throw new Error(`Failed to send image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('❌ Error with Form-Data method:', error);
+      throw new Error(`Form-Data method failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

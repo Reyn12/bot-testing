@@ -1,4 +1,6 @@
 // Tokopay API Client
+import { createHmac } from 'crypto';
+
 interface TokopayConfig {
   merchantId: string;
   secretKey: string;
@@ -19,7 +21,7 @@ interface TokopayResponse {
   status: boolean;
   error_code?: string;
   error_msg?: string;
-  data?: any;
+  data?: Record<string, unknown>;
   reference_id?: string;
   redirect_url?: string;
   qr_string?: string;
@@ -45,9 +47,7 @@ export class TokopayAPI {
 
   // Generate signature untuk request
   private generateSignature(data: string): string {
-    const crypto = require('crypto');
-    return crypto
-      .createHmac('sha256', this.config.secretKey)
+    return createHmac('sha256', this.config.secretKey)
       .update(data)
       .digest('hex');
   }

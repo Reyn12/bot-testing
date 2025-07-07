@@ -111,8 +111,8 @@ export class FonnteAPI {
       
       const payload = {
         target: target,
+        message: caption || 'Image', // Fonnte butuh parameter message, bukan caption
         file: file,
-        caption: caption,
         countryCode: countryCode,
         ...(this.device && { device: this.device })
       };
@@ -120,7 +120,7 @@ export class FonnteAPI {
       console.log('📸 Sending image to Fonnte:', {
         target: target,
         file: file,
-        caption: caption.substring(0, 50) + '...',
+        message: payload.message,
         timestamp: new Date().toISOString()
       });
 

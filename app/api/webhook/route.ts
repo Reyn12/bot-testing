@@ -66,36 +66,33 @@ async function processMessage(data: FonnteWebhookData) {
       const timestamp = Date.now();
       const refId = `payment_${sender}_${timestamp}`;
       
-      // Create payment
+      // Create payment sesuai interface yang baru
       const paymentResult = await tokopayAPI.createPayment({
         refId: refId,
         amount: 25000, // Rp 25.000 (example amount)
-        channel: 'QRIS', // QRIS untuk QR Code
-        customerName: name || 'Customer',
-        customerEmail: 'customer@email.com', // bisa di-customize
-        customerPhone: sender,
-        expiredTime: 60 // 1 jam
+        channel: 'QRIS' // QRIS untuk QR Code
       });
       
-      if (paymentResult.status && paymentResult.pay_url) {
-        console.log('✅ Payment link created:', paymentResult.pay_url);
+      if (paymentResult.status === 'Success' && paymentResult.data?.pay_url) {
+        console.log('✅ Payment link created:', paymentResult.data.pay_url);
         
-        reply = `💰 *Link Pembayaran Created!*
+        reply = `💰 *Link Pembayaran Berhasil Dibuat!*
 
 🔗 *Klik link untuk bayar:*
-${paymentResult.pay_url}
+${paymentResult.data.pay_url}
 
-📱 *Atau scan QR code* di link tersebut
+📱 *Atau lihat QR code:*
+${paymentResult.data.qr_link || 'QR code tersedia di link pembayaran'}
 
 💳 *Detail Pembayaran:*
-• Jumlah: Rp 25.000
-• ID: ${refId}
-• Expired: 1 jam dari sekarang
+• Jumlah: Rp ${paymentResult.data.total_bayar?.toLocaleString() || '25,000'}
+• Diterima: Rp ${paymentResult.data.total_diterima?.toLocaleString() || '24,725'}
+• ID Transaksi: ${paymentResult.data.trx_id || refId}
 
 ⚠️ *Penting:*
 • Setelah bayar, kamu akan dapat konfirmasi otomatis
 • Pesanan akan diproses langsung
-• Hubungi CS jika ada masalah
+• Link berlaku sampai pembayaran selesai
 
 Terima kasih! 😊`;
 

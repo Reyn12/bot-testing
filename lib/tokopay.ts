@@ -10,22 +10,23 @@ interface TokopayConfig {
 interface CreatePaymentParams {
   refId: string;
   amount: number;
-  channel: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  expiredTime?: number; // dalam menit
+  channel: string; // QRIS, BRIVA, BNIK, dll
 }
 
 interface TokopayResponse {
-  status: boolean;
+  status: string; // "Success" atau "Failed"
   error_code?: string;
   error_msg?: string;
-  data?: Record<string, unknown>;
-  reference_id?: string;
-  redirect_url?: string;
-  qr_string?: string;
-  pay_url?: string;
+  data?: {
+    pay_url?: string;
+    qr_link?: string;
+    qr_string?: string;
+    total_bayar?: number;
+    total_diterima?: number;
+    trx_id?: string;
+    other?: string;
+    panduan_pembayaran?: string;
+  };
 }
 
 interface WebhookData {
@@ -52,22 +53,16 @@ export class TokopayAPI {
       .digest('hex');
   }
 
-  // Create payment transaction
+  // Create payment transaction sesuai dokumentasi resmi Tokopay
   async createPayment(params: CreatePaymentParams): Promise<TokopayResponse> {
-    const payload = {
-      merchant_id: this.config.merchantId,
+    // Format sesuai docs: GET /v1/order?merchant=XXX&secret=XXX&ref_id=XXX&nominal=XXX&metode=XXX
+    const queryParams = new URLSearchParams({
+      merchant: this.config.merchantId,
+      secret: this.config.secretKey,
       ref_id: params.refId,
-      amount: params.amount,
-      channel: params.channel,
-      customer_name: params.customerName,
-      customer_email: params.customerEmail,
-      customer_phone: params.customerPhone,
-      expired_time: params.expiredTime || 60, // default 1 jam
-    };
-
-    // Generate signature
-    const signatureString = `${this.config.merchantId}:${params.refId}:${params.amount}`;
-    const signature = this.generateSignature(signatureString);
+      nominal: params.amount.toString(),
+      metode: params.channel // QRIS, BRIVA, dll
+    });
 
     console.log('💳 Creating Tokopay payment:', {
       ref_id: params.refId,
@@ -77,20 +72,22 @@ export class TokopayAPI {
     });
 
     try {
-      const response = await fetch(`${this.config.baseUrl}/v1/payment`, {
-        method: 'POST',
+      const url = `${this.config.baseUrl}/v1/order?${queryParams.toString()}`;
+      
+      console.log('🔗 Tokopay request URL:', url.replace(this.config.secretKey, 'SECRET_HIDDEN'));
+
+      const response = await fetch(url, {
+        method: 'GET', // Sesuai dokumentasi: GET request
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${signature}`,
         },
-        body: JSON.stringify(payload),
       });
 
       const result = await response.json() as TokopayResponse;
       
       console.log('📱 Tokopay payment response:', {
         status: result.status,
-        reference_id: result.reference_id,
+        trx_id: result.data?.trx_id,
         response: result
       });
 

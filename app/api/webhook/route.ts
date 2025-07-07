@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createFonnteAPI } from '../../../lib/fonnte';
+import { createTokopayAPI } from '../../../lib/tokopay';
 
 interface FonnteWebhookData {
   device: string;
@@ -55,32 +56,69 @@ async function processMessage(data: FonnteWebhookData) {
   } else if (message.toLowerCase().includes('produk')) {
     reply = `📦 Produk kami:\n• Produk A - Rp 100.000\n• Produk B - Rp 150.000\n• Produk C - Rp 200.000\n\nMau tau lebih detail yang mana?`;
   } else if (message.toLowerCase().includes('bayar')) {
-    // Kirim QR code untuk pembayaran
+    // Generate payment link dengan Tokopay
     console.log('💳 Processing payment request from:', sender);
     
     try {
-      const fonnteAPI = createFonnteAPI();
+      const tokopayAPI = createTokopayAPI();
       
-      // Coba kirim gambar QR code dulu
-      const imageResult = await fonnteAPI.sendImage({
-        target: sender,
-        file: 'https://play-lh.googleusercontent.com/Byl6BHzEv7tWDGa5QUgztneq8C8TGYelu8ywVMTTRUH2e9keboyLqL4YhmzaU3vjgA',
-        caption: '💰 QR Code Pembayaran\n\nSilakan scan QR code di atas untuk melakukan pembayaran.\n\nSetelah transfer, konfirmasi ke kami ya! 😊'
+      // Generate unique reference ID
+      const timestamp = Date.now();
+      const refId = `payment_${sender}_${timestamp}`;
+      
+      // Create payment
+      const paymentResult = await tokopayAPI.createPayment({
+        refId: refId,
+        amount: 25000, // Rp 25.000 (example amount)
+        channel: 'QRIS', // QRIS untuk QR Code
+        customerName: name || 'Customer',
+        customerEmail: 'customer@email.com', // bisa di-customize
+        customerPhone: sender,
+        expiredTime: 60 // 1 jam
       });
       
-      console.log('📸 Image send result:', imageResult);
-      
-      // Set reply berdasarkan hasil kirim image
-      if (imageResult.status) {
-        reply = '✅ QR Code pembayaran sudah dikirim!\n\nSilakan cek gambar di atas dan scan untuk melakukan pembayaran. 📱';
+      if (paymentResult.status && paymentResult.pay_url) {
+        console.log('✅ Payment link created:', paymentResult.pay_url);
+        
+        reply = `💰 *Link Pembayaran Created!*
+
+🔗 *Klik link untuk bayar:*
+${paymentResult.pay_url}
+
+📱 *Atau scan QR code* di link tersebut
+
+💳 *Detail Pembayaran:*
+• Jumlah: Rp 25.000
+• ID: ${refId}
+• Expired: 1 jam dari sekarang
+
+⚠️ *Penting:*
+• Setelah bayar, kamu akan dapat konfirmasi otomatis
+• Pesanan akan diproses langsung
+• Hubungi CS jika ada masalah
+
+Terima kasih! 😊`;
+
       } else {
-        reply = '❌ Maaf, gagal mengirim QR code.\n\nCoba ketik "bayar" lagi atau hubungi customer service.';
+        console.error('❌ Failed to create payment:', paymentResult);
+        
+        reply = `❌ *Maaf, ada masalah teknis*
+
+Gagal membuat link pembayaran. Silakan coba lagi dalam beberapa menit atau hubungi customer service.
+
+Error: ${paymentResult.error_msg || 'Unknown error'}`;
       }
       
     } catch (error) {
-      console.error('❌ Failed to send QR code:', error);
-      reply = '❌ Maaf, ada masalah teknis saat mengirim QR code.\n\nCoba lagi nanti atau hubungi customer service! 😅';
+      console.error('❌ Tokopay API error:', error);
+      
+      reply = `❌ *Sistem sedang maintenance*
+
+Maaf, sistem pembayaran sedang dalam perbaikan. Silakan coba lagi nanti atau hubungi customer service untuk bantuan.`;
     }
+    
+    console.log('💳 Payment response sent to:', sender);
+    
   } else {
     reply = `Terima kasih pesannya: "${message}"\n\nAku sedang belajar jadi maaf kalo belum bisa jawab dengan baik. Coba ketik "help" untuk bantuan! 🤖`;
   }

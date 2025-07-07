@@ -2,4 +2,9 @@
 FONNTE_TOKEN=83rHp4ia9#8@b#nS7HfK
 
 # DEVICE ID (opsional) - kalo punya lebih dari 1 device
-FONNTE_DEVICE=device_id_kamu
+FONNTE_DEVICE=your_device_id_here
+
+# Tokopay API Configuration
+TOKOPAY_MERCHANT_ID=M240629LNZYQ310
+TOKOPAY_SECRET_KEY=3970cac9bdb5bf79ea96ed214cc7cb45d4a982e06cac63aaf2c57220e5eb6437
+TOKOPAY_BASE_URL=https://api.tokopay.id

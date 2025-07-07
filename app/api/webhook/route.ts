@@ -69,7 +69,7 @@ async function processMessage(data: FonnteWebhookData) {
       // Create payment sesuai interface yang baru
       const paymentResult = await tokopayAPI.createPayment({
         refId: refId,
-        amount: 25000, // Rp 25.000 (example amount)
+        amount: 200, // Rp 200 untuk testing
         channel: 'QRIS' // QRIS untuk QR Code
       });
       

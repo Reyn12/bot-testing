@@ -9,6 +9,14 @@ interface SendMessageParams {
   countryCode?: string;
 }
 
+// Tambah interface untuk send image
+interface SendImageParams {
+  target: string;
+  file: string; // URL gambar
+  caption?: string;
+  countryCode?: string;
+}
+
 // Tambah interface untuk response
 interface FonnteResponse {
   status: boolean;
@@ -92,6 +100,50 @@ export class FonnteAPI {
       
     } catch (error) {
       console.error('❌ Failed to get device status:', error);
+      throw error;
+    }
+  }
+
+  // Method baru buat kirim gambar
+  async sendImage(params: SendImageParams): Promise<FonnteResponse> {
+    try {
+      const { target, file, caption = '', countryCode = '62' } = params;
+      
+      const payload = {
+        target: target,
+        file: file,
+        caption: caption,
+        countryCode: countryCode,
+        ...(this.device && { device: this.device })
+      };
+
+      console.log('📸 Sending image to Fonnte:', {
+        target: target,
+        file: file,
+        caption: caption.substring(0, 50) + '...',
+        timestamp: new Date().toISOString()
+      });
+
+      const response = await fetch(`${this.baseURL}/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': this.token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(`Fonnte API Error: ${result.reason || 'Unknown error'}`);
+      }
+
+      console.log('✅ Image sent successfully:', result);
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Failed to send image:', error);
       throw error;
     }
   }

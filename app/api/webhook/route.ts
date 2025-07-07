@@ -51,9 +51,28 @@ async function processMessage(data: FonnteWebhookData) {
   if (message.toLowerCase().includes('halo') || message.toLowerCase().includes('hi')) {
     reply = `Halo ${name || sender}! 👋 Gimana kabarnya?`;
   } else if (message.toLowerCase().includes('help') || message.toLowerCase().includes('bantuan')) {
-    reply = `Aku bisa bantu kamu dengan:\n• Info produk\n• Customer service\n• Pertanyaan umum\n\nKetik aja yang kamu butuhin!`;
+    reply = `Aku bisa bantu kamu dengan:\n• Info produk\n• Pembayaran (ketik "bayar")\n• Customer service\n• Pertanyaan umum\n\nKetik aja yang kamu butuhin!`;
   } else if (message.toLowerCase().includes('produk')) {
     reply = `📦 Produk kami:\n• Produk A - Rp 100.000\n• Produk B - Rp 150.000\n• Produk C - Rp 200.000\n\nMau tau lebih detail yang mana?`;
+  } else if (message.toLowerCase().includes('bayar')) {
+    // Kirim QR code untuk pembayaran
+    try {
+      const fonnteAPI = createFonnteAPI();
+      await fonnteAPI.sendImage({
+        target: sender,
+        file: 'https://play-lh.googleusercontent.com/Byl6BHzEv7tWDGa5QUgztneq8C8TGYelu8ywVMTTRUH2e9keboyLqL4YhmzaU3vjgA',
+        caption: '💰 QR Code Pembayaran\n\nSilakan scan QR code di atas untuk melakukan pembayaran.\n\nSetelah transfer, konfirmasi ke kami ya! 😊'
+      });
+      
+      reply = 'QR Code pembayaran sudah dikirim! 📱';
+      console.log('✅ QR Code sent successfully to:', sender);
+      
+      // Return early karena udah kirim image, ga perlu kirim text lagi
+      return reply;
+    } catch (error) {
+      console.error('❌ Failed to send QR code:', error);
+      reply = 'Maaf, ada masalah saat mengirim QR code. Coba lagi nanti ya! 😅';
+    }
   } else {
     reply = `Terima kasih pesannya: "${message}"\n\nAku sedang belajar jadi maaf kalo belum bisa jawab dengan baik. Coba ketik "help" untuk bantuan! 🤖`;
   }

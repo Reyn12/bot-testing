@@ -9,6 +9,21 @@ interface SendMessageParams {
   countryCode?: string;
 }
 
+// Tambah interface untuk response
+interface FonnteResponse {
+  status: boolean;
+  message?: string;
+  id?: string;
+  reason?: string;
+}
+
+interface DeviceStatusResponse {
+  device_status: string;
+  device_id: string;
+  webhook: string;
+  expired?: string;
+}
+
 export class FonnteAPI {
   private token: string;
   private device?: string;
@@ -19,7 +34,8 @@ export class FonnteAPI {
     this.device = config.device;
   }
 
-  async sendMessage(params: SendMessageParams): Promise<any> {
+  // Ubah dari Promise<any> jadi Promise<FonnteResponse>
+  async sendMessage(params: SendMessageParams): Promise<FonnteResponse> {
     try {
       const { target, message, countryCode = '62' } = params;
       
@@ -60,7 +76,8 @@ export class FonnteAPI {
     }
   }
 
-  async getDeviceStatus(): Promise<any> {
+  // Ubah dari Promise<any> jadi Promise<DeviceStatusResponse>
+  async getDeviceStatus(): Promise<DeviceStatusResponse> {
     try {
       const response = await fetch(`${this.baseURL}/device`, {
         method: 'POST',
